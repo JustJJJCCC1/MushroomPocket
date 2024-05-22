@@ -1,0 +1,15 @@
+/workspaces/MushroomPocket/bin/Debug/net8.0/MushroomPocket
+/workspaces/MushroomPocket/bin/Debug/net8.0/MushroomPocket.deps.json
+/workspaces/MushroomPocket/bin/Debug/net8.0/MushroomPocket.runtimeconfig.json
+/workspaces/MushroomPocket/bin/Debug/net8.0/MushroomPocket.dll
+/workspaces/MushroomPocket/bin/Debug/net8.0/MushroomPocket.pdb
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.AssemblyInfoInputs.cache
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.AssemblyInfo.cs
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.csproj.CoreCompileInputs.cache
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.sourcelink.json
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.dll
+/workspaces/MushroomPocket/obj/Debug/net8.0/refint/MushroomPocket.dll
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.pdb
+/workspaces/MushroomPocket/obj/Debug/net8.0/MushroomPocket.genruntimeconfig.cache
+/workspaces/MushroomPocket/obj/Debug/net8.0/ref/MushroomPocket.dll
