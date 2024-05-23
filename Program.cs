@@ -4,17 +4,23 @@ using System.ComponentModel.Design;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Data.SQLite;
 
 namespace MushroomPocket
 {
     class Program
     {
+        static SQLiteConnection connection;
+        static SQLiteCommand command;
+        static SQLiteConnection inventoryConnection;
+        static SQLiteCommand inventoryCommand;
         public static Dictionary<string, List<Character>> Characters = new Dictionary<string, List<Character>>();
         public static List<int> common_exp_book = new List<int> { 0 };
         public static List<int> rare_exp_book = new List<int> { 0 };
         public static List<int> legendary_exp_book = new List<int> { 0 };
-        public static List<int> character_spawner = new List<int> { 3 };
-        public static List<int> tokens = new List<int> { 20 };
+        public static List<int> character_spawner = new List<int> { 0 };
+        public static List<int> tokens = new List<int> { 0 };
+        public static List<int> gift_count = new List<int> { 1 };
         static void Main(string[] args)
         {
             //MushroomMaster criteria list for checking character transformation availability.   
@@ -45,13 +51,16 @@ namespace MushroomPocket
                 Console.WriteLine("(7). Open Lootbox");
                 Console.WriteLine("(8). Check Inventory");
                 Console.WriteLine("(9). How To Play");
-                Console.Write("Please only enter [1, 2, 3, 4, 5, 6, 7, 8, 9] or Q to quit: ");
+                Console.WriteLine("(10). Free Gift");
+                Console.WriteLine("(R). Reset Game");
+                Console.Write("Please only enter [1, 2, 3, 4, 5, 6, 7, 8, 9, R] or Q to quit: ");
                 string choice = Console.ReadLine();
                 Console.WriteLine();
                 switch (choice)
                 {
                     case "1":
                         AddCharacter();
+                        UpdateDatabase();
                         Menu();
                         break;
                     case "2":
@@ -64,18 +73,25 @@ namespace MushroomPocket
                         break;
                     case "4":
                         Transform();
+                        UpdateDatabase();
                         Menu();
                         break;
                     case "5":
                         GainEXP();
+                        UpdateDatabase();
+                        UpdateInventoryDatabase();
                         Menu();
                         break;
                     case "6":
                         Game();
+                        UpdateDatabase();
+                        UpdateInventoryDatabase();
                         Menu();
                         break;
                     case "7":
                         OpenLootbox();
+                        UpdateDatabase();
+                        UpdateInventoryDatabase();
                         Menu();
                         break;
                     case "8":
@@ -84,6 +100,16 @@ namespace MushroomPocket
                         break;
                     case "9":
                         HowToPlay();
+                        Menu();
+                        break;
+                    case "10":
+                        FreeGift();
+                        UpdateInventoryDatabase();
+                        Menu();
+                        break;
+                    case "R":
+                    case "r":
+                        Reset();
                         Menu();
                         break;
                     case "Q":
@@ -95,6 +121,148 @@ namespace MushroomPocket
                         Menu();
                         break;
                 }
+            }
+
+            static void InitializeDatabase()
+
+            {
+
+                connection = new SQLiteConnection("Data Source=Characters.db;Version=3;");
+
+                connection.Open();
+
+                // Create a table to store characters
+
+                command = new SQLiteCommand("CREATE TABLE IF NOT EXISTS Characters (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, HP INTEGER, EXP INTEGER, Skill TEXT)", connection);
+
+                command.ExecuteNonQuery();
+
+                //add characters from the database to the dictionary
+
+                command = new SQLiteCommand("SELECT * FROM Characters", connection);
+
+                SQLiteDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+
+                {
+
+                    string name = reader["Name"].ToString();
+
+                    int hp = Convert.ToInt32(reader["HP"]);
+
+                    int exp = Convert.ToInt32(reader["EXP"]);
+
+                    string skill = reader["Skill"].ToString();
+
+                    if (Characters.ContainsKey(name))
+
+                    {
+
+                        Characters[name].Add(new Character { character_name = name, character_hp = hp, character_exp = exp, character_skill = skill });
+
+                    }
+
+                    else
+
+                    {
+
+                        Characters[name] = new List<Character> { new Character { character_name = name, character_hp = hp, character_exp = exp, character_skill = skill } };
+
+                    }
+                }
+            }
+
+            //make a function to update the database through the dictionary by deleting all the records and then inserting all the records from the dictionary
+            static void UpdateDatabase()
+
+            {
+
+                command = new SQLiteCommand("DELETE FROM Characters", connection);
+
+                command.ExecuteNonQuery();
+
+                foreach (KeyValuePair<string, List<Character>> entry in Characters)
+
+                {
+
+                    foreach (Character character_instance in entry.Value)
+
+                    {
+
+                        command = new SQLiteCommand("INSERT INTO Characters (Name, HP, EXP, Skill) VALUES (@Name, @HP, @EXP, @Skill)", connection);
+
+                        command.Parameters.AddWithValue("@Name", character_instance.character_name);
+
+                        command.Parameters.AddWithValue("@HP", character_instance.character_hp);
+
+                        command.Parameters.AddWithValue("@EXP", character_instance.character_exp);
+
+                        command.Parameters.AddWithValue("@Skill", character_instance.character_skill);
+
+                        command.ExecuteNonQuery();
+
+                    }
+
+                }
+
+            }
+
+            static void InitializeInventoryDatabase()
+
+            {
+
+                inventoryConnection = new SQLiteConnection("Data Source=Inventory.db;Version=3;");
+
+                inventoryConnection.Open();
+
+                inventoryCommand = new SQLiteCommand("CREATE TABLE IF NOT EXISTS Inventory (Common_EXP_Book INT, Rare_EXP_Book INT, Legendary_EXP_Book INT, Spawner INT, Tokens INT)", inventoryConnection);
+
+                inventoryCommand.ExecuteNonQuery();
+
+                inventoryCommand = new SQLiteCommand("SELECT * FROM Inventory", inventoryConnection);
+
+                SQLiteDataReader reader = inventoryCommand.ExecuteReader();
+
+                while (reader.Read())
+
+                {
+
+                    common_exp_book[0] = Convert.ToInt32(reader["Common_EXP_Book"]);
+
+                    rare_exp_book[0] = Convert.ToInt32(reader["Rare_EXP_Book"]);
+
+                    legendary_exp_book[0] = Convert.ToInt32(reader["Legendary_EXP_Book"]);
+
+                    character_spawner[0] = Convert.ToInt32(reader["Spawner"]);
+
+                    tokens[0] = Convert.ToInt32(reader["Tokens"]);
+
+                }
+            }
+
+            static void UpdateInventoryDatabase()
+
+            {
+
+                inventoryCommand = new SQLiteCommand("DELETE FROM Inventory", inventoryConnection);
+
+                inventoryCommand.ExecuteNonQuery();
+
+                inventoryCommand = new SQLiteCommand("INSERT INTO Inventory (Common_EXP_Book, Rare_EXP_Book, Legendary_EXP_Book, Spawner, Tokens) VALUES (@Common_EXP_Book, @Rare_EXP_Book, @Legendary_EXP_Book, @Spawner, @Tokens)", inventoryConnection);
+
+                inventoryCommand.Parameters.AddWithValue("@Common_EXP_Book", common_exp_book[0]);
+
+                inventoryCommand.Parameters.AddWithValue("@Rare_EXP_Book", rare_exp_book[0]);
+
+                inventoryCommand.Parameters.AddWithValue("@Legendary_EXP_Book", legendary_exp_book[0]);
+
+                inventoryCommand.Parameters.AddWithValue("@Spawner", character_spawner[0]);
+
+                inventoryCommand.Parameters.AddWithValue("@Tokens", tokens[0]);
+
+                inventoryCommand.ExecuteNonQuery();
+
             }
 
             static void AddCharacter()
@@ -136,13 +304,13 @@ namespace MushroomPocket
                             exp = 0;
                         }
                         Characters[character_name][Characters[character_name].Count - 1].character_exp = exp;
+                        character_spawner[0] -= 1;
+                        Console.WriteLine($"{character_name} has been added to your pocket");
                     }
                     else
                     {
-                        Characters[character_name] = new List<Character> { CreateCharacterInstance(character_name) };
+                        Console.WriteLine("Invalid character name");
                     }
-                    character_spawner[0] -= 1;
-                    Console.WriteLine($"{character_name} has been added to your pocket");
                 }
             }
 
@@ -161,11 +329,12 @@ namespace MushroomPocket
                             int lootbox = random.Next(1, 101);
                             if (lootbox <= 20)
                             {
-                                string character_name = random.Next(1, 3) switch
+                                string character_name = random.Next(1, 4) switch
                                 {
                                     1 => "Waluigi",
                                     2 => "Daisy",
-                                    _ => "Wario",
+                                    3 => "Wario",
+                                    _ => null,
                                 };
                                 if (Characters.ContainsKey(character_name))
                                 {
@@ -620,6 +789,22 @@ namespace MushroomPocket
                 Console.WriteLine();
             }
 
+            static void FreeGift()
+            {
+                if (gift_count[0] == 1)
+                {
+                    Console.WriteLine("You have received a free gift of 30 tokens!");
+                    tokens[0] += 30;
+                    Console.WriteLine("YOu have received a free gift of 3 Character Spawner!");
+                    character_spawner[0] += 3;
+                    gift_count[0] -= 1;
+                }
+                else
+                {
+                    Console.WriteLine("You have already claimed your free gift");
+                }
+            }
+
             static void HowToPlay()
             {
                 Console.WriteLine("********************************");
@@ -658,6 +843,29 @@ namespace MushroomPocket
                 Console.WriteLine("17. Different characters have different skills that can help in the game");
                 Console.WriteLine();
             }
+
+            static void Reset()
+            {
+                Console.Write("Are you sure you want to reset the game? (yes/no): ");
+                string choice = Console.ReadLine();
+                if (choice == "yes")
+                {
+                    Characters.Clear();
+                    common_exp_book[0] = 0;
+                    rare_exp_book[0] = 0;
+                    legendary_exp_book[0] = 0;
+                    character_spawner[0] = 0;
+                    tokens[0] = 0;
+                    gift_count[0] = 1;
+                    UpdateDatabase();
+                    UpdateInventoryDatabase();
+                }
+                else
+                {}
+            }
+
+            InitializeDatabase();
+            InitializeInventoryDatabase();
             Menu();
         }
     }

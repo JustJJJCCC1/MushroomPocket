@@ -5,4 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="system.data.Sqlite" Version="1.0.118" />
+  </ItemGroup>
+
 </Project>

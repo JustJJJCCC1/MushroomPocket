@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Data.SQLite;
 
 namespace MushroomPocket
 {
@@ -19,9 +21,13 @@ namespace MushroomPocket
 
     public class Character
     {
+        [DataType(DataType.Text)]
         public string character_name;
+        [DataType(DataType.Text)]
         public int character_hp;
+        [DataType(DataType.Text)]
         public int character_exp;
+        [DataType(DataType.Text)]
         public string character_skill;
 
         public class Waluigi : Character
