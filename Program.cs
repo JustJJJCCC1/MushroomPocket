@@ -36,7 +36,7 @@ namespace MushroomPocket
             //Use "Environment.Exit(0);" if you want to implement an exit of the console program
             //Start your assignment 1 requirements below.
 
-            static void Menu()
+            void Menu()
             {
                 Console.WriteLine();
                 Console.WriteLine("********************************");
@@ -131,13 +131,9 @@ namespace MushroomPocket
 
                 connection.Open();
 
-                // Create a table to store characters
-
                 command = new SQLiteCommand("CREATE TABLE IF NOT EXISTS Characters (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, HP INTEGER, EXP INTEGER, Skill TEXT)", connection);
 
                 command.ExecuteNonQuery();
-
-                //add characters from the database to the dictionary
 
                 command = new SQLiteCommand("SELECT * FROM Characters", connection);
 
@@ -173,12 +169,11 @@ namespace MushroomPocket
                 }
             }
 
-            //make a function to update the database through the dictionary by deleting all the records and then inserting all the records from the dictionary
             static void UpdateDatabase()
 
             {
 
-                command = new SQLiteCommand("DELETE FROM Characters", connection);
+                command = new SQLiteCommand("DROP TABLE IF EXISTS Characters; CREATE TABLE Characters (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, HP INTEGER, EXP INTEGER, Skill TEXT)", connection);
 
                 command.ExecuteNonQuery();
 
@@ -282,6 +277,34 @@ namespace MushroomPocket
                     if (Characters.ContainsKey(character_name))
                     {
                         Characters[character_name].Add(CreateCharacterInstance(character_name));
+                        Console.WriteLine("Enter the HP of the character: ");
+                        int hp = Convert.ToInt32(Console.ReadLine());
+                        if (hp > 100)
+                        {
+                            hp = 100;
+                        }
+                        else if (hp <= 0)
+                        {
+                            hp = 1;
+                        }
+                        Characters[character_name][Characters[character_name].Count - 1].character_hp = hp;
+                        Console.WriteLine("Enter the EXP of the character: ");
+                        int exp = Convert.ToInt32(Console.ReadLine());
+                        if (exp > 100)
+                        {
+                            exp = 100;
+                        }
+                        else if (exp < 0)
+                        {
+                            exp = 0;
+                        }
+                        Characters[character_name][Characters[character_name].Count - 1].character_exp = exp;
+                        character_spawner[0] -= 1;
+                        Console.WriteLine($"{character_name} has been added to your pocket");
+                    }
+                    else if (character_name == "Waluigi" || character_name == "Daisy" || character_name == "Wario")
+                    {
+                        Characters[character_name] = new List<Character> { CreateCharacterInstance(character_name) };
                         Console.WriteLine("Enter the HP of the character: ");
                         int hp = Convert.ToInt32(Console.ReadLine());
                         if (hp > 100)
@@ -417,8 +440,51 @@ namespace MushroomPocket
                 }
             }
 
-            static void CheckTransform()
+            void CheckTransform()
             {
+                int count_0 = 0;
+                int count_1 = 0;
+                int count_2 = 0;
+
+                
+                foreach (List<Character> instances in Characters.Values)
+                {
+                    foreach (Character character_instance in instances)
+                    {
+                        if (character_instance.character_name == mushroomMasters[2].Name && character_instance.character_exp >= 100)
+                        {
+                            count_2 += 1;
+                            if (count_2 >= mushroomMasters[2].NoToTransform)
+                            {
+                                Console.WriteLine($"{mushroomMasters[2].Name} --> {mushroomMasters[2].TransformTo}");
+                            }
+                        }
+                        
+                        else if (character_instance.character_name == mushroomMasters[0].Name && character_instance.character_exp >= 100)
+                        {
+                            count_0 += 1;
+                            if (count_0 >= mushroomMasters[0].NoToTransform)
+                            {
+                                Console.WriteLine($"{mushroomMasters[0].Name} --> {mushroomMasters[0].TransformTo}");
+                            }
+                        }
+                        else if (character_instance.character_name == mushroomMasters[1].Name && character_instance.character_exp >= 100)
+                        {
+                            count_1 += 1;
+                            if (count_1 >= mushroomMasters[1].NoToTransform)
+                            {
+                                Console.WriteLine($"{mushroomMasters[1].Name} --> {mushroomMasters[1].TransformTo}");
+                            }
+                        }
+                    }
+                }
+            }
+
+            static void Transform()
+            {
+                //transform 2 Daisy with 100EXP into 1 Peach
+                //transform 3 Wario with 100EXP into 1 Mario
+                //transform 1 Waluigi with 100EXP into 1 Luigi
                 int daisy_count = 0;
                 int wario_count = 0;
                 int waluigi_count = 0;
@@ -444,65 +510,62 @@ namespace MushroomPocket
 
                 if (daisy_count >= 2)
                 {
-                    Console.WriteLine("Daisy --> Peach");
+                    for (int i = 0; i < 2; i++)
+                    {
+                        foreach (List<Character> instances in Characters.Values)
+                        {
+                            foreach (Character character_instance in instances)
+                            {
+                                if (character_instance.character_name == "Daisy" && character_instance.character_exp >= 100)
+                                {
+                                    instances.Remove(character_instance);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    Characters["Peach"] = new List<Character> { new Character.Peach() };
+                    Console.WriteLine("Daisy has been transformed into Peach");
                 }
 
                 if (wario_count >= 3)
                 {
-                    Console.WriteLine("Wario --> Mario");
+                    for (int i = 0; i < 3; i++)
+                    {
+                        foreach (List<Character> instances in Characters.Values)
+                        {
+                            foreach (Character character_instance in instances)
+                            {
+                                if (character_instance.character_name == "Wario" && character_instance.character_exp >= 100)
+                                {
+                                    instances.Remove(character_instance);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    Characters["Mario"] = new List<Character> { new Character.Mario() };
+                    Console.WriteLine("Wario has been transformed into Mario");
                 }
 
                 if (waluigi_count >= 1)
                 {
-                    Console.WriteLine("Waluigi --> Luigi");
-                }
-            }
-
-            static void Transform()
-            {
-                foreach (KeyValuePair<string, List<Character>> entry in Characters)
-                {
-                    bool transformed = false;
-                    List<Character> new_instances = new List<Character>();
-
-                    foreach (Character character_instance in entry.Value)
+                    for (int i = 0; i < 1; i++)
                     {
-                        if (character_instance.character_name == "Daisy" && character_instance.character_exp >= 100)
+                        foreach (List<Character> instances in Characters.Values)
                         {
-                            new_instances.Add(new Character.Peach());
-                            Console.WriteLine("Daisy has been transformed to Peach");
-                            transformed = true;
-                        }
-                        else if (character_instance.character_name == "Wario" && character_instance.character_exp >= 100)
-                        {
-                            new_instances.Add(new Character.Mario());
-                            Console.WriteLine("Wario has been transformed to Mario");
-                            transformed = true;
-                        }
-                        else if (character_instance.character_name == "Waluigi" && character_instance.character_exp >= 100)
-                        {
-                            new_instances.Add(new Character.Luigi());
-                            Console.WriteLine("Waluigi has been transformed to Luigi");
-                            transformed = true;
-                        }
-                        else
-                        {
-                            new_instances.Add(character_instance);
+                            foreach (Character character_instance in instances)
+                            {
+                                if (character_instance.character_name == "Waluigi" && character_instance.character_exp >= 100)
+                                {
+                                    instances.Remove(character_instance);
+                                    break;
+                                }
+                            }
                         }
                     }
-
-                    if (transformed)
-                    {
-                        Characters[entry.Key] = new_instances;
-                    }
-                }
-                // Remove excess characters if transformed
-                foreach (string character_name in new List<string>(Characters.Keys))
-                {
-                    if (Characters[character_name].Count == 0)
-                    {
-                        Characters.Remove(character_name);
-                    }
+                    Characters["Luigi"] = new List<Character> { new Character.Luigi() };
+                    Console.WriteLine("Waluigi has been transformed into Luigi");
                 }
             }
 
@@ -774,7 +837,6 @@ namespace MushroomPocket
                 else
                 {
                     Console.WriteLine("Invalid input");
-                    Game();
                 }
             }
 
@@ -808,7 +870,7 @@ namespace MushroomPocket
             static void HowToPlay()
             {
                 Console.WriteLine("********************************");
-                Console.WriteLine("Rules");
+                Console.WriteLine("How To Play");
                 Console.WriteLine("********************************");
                 Console.WriteLine("1. The game is called Mushroom Pocket");
                 Console.WriteLine("2. You can add a character to your pocket using a Character Spawner");
@@ -842,6 +904,9 @@ namespace MushroomPocket
                 Console.WriteLine("16. The game can be played with or without a character");
                 Console.WriteLine("17. Different characters have different skills that can help in the game");
                 Console.WriteLine();
+                Console.WriteLine("Done reading? Press any key to go back to the main menu");
+                Console.ReadKey();
+                Console.Clear();
             }
 
             static void Reset()
@@ -861,7 +926,7 @@ namespace MushroomPocket
                     UpdateInventoryDatabase();
                 }
                 else
-                {}
+                { }
             }
 
             InitializeDatabase();
